@@ -6,6 +6,7 @@
 ;; Maintainer: Pavel Kurnosov <pashky@gmail.com>
 ;; Created: 01 Apr 2012
 ;; Keywords: http
+;; Package-Version: 20200502.831
 
 ;; This file is not part of GNU Emacs.
 ;; This file is public domain software. Do what you want.
@@ -94,8 +95,53 @@
   "Face for variable usage (only used when headers/body is represented as a single variable, not highlighted when variable appears in the middle of other text)."
   :group 'restclient-faces)
 
+;; Default for anything not specified.
 (defface restclient-method-face
-  '((t (:inherit font-lock-keyword-face)))
+  '((t (:inherit font-lock-keyword-face
+        :foreground "grey")))
+  "Face for HTTP method."
+  :group 'restclient-faces)
+
+;; bold red
+(defface restclient-method-delete-face
+  '((t (:inherit font-lock-keyword-face
+                 :foreground "red")))
+  "Face for HTTP method."
+  :group 'restclient-faces)
+
+(defface restclient-method-get-face
+  '((t (:inherit font-lock-keyword-face
+        :foreground "green")))
+  "Face for HTTP method."
+  :group 'restclient-faces)
+
+(defface restclient-method-head-face
+  '((t (:inherit font-lock-keyword-face
+                 :foreground "grey")))
+  "Face for HTTP method."
+  :group 'restclient-faces)
+
+(defface restclient-method-options-face
+  '((t (:inherit font-lock-keyword-face
+                 :foreground "grey")))
+  "Face for HTTP method."
+  :group 'restclient-faces)
+
+(defface restclient-method-patch-face
+  '((t (:inherit font-lock-keyword-face
+                 :foreground "grey")))
+  "Face for HTTP method."
+  :group 'restclient-faces)
+
+(defface restclient-method-post-face
+  '((t (:inherit font-lock-keyword-face
+                 :foreground "yellow")))
+  "Face for HTTP method."
+  :group 'restclient-faces)
+
+(defface restclient-method-put-face
+  '((t (:inherit font-lock-keyword-face
+                 :foreground "dodger blue")))
   "Face for HTTP method."
   :group 'restclient-faces)
 
@@ -172,6 +218,27 @@
 
 (defconst restclient-method-url-regexp
   "^\\(GET\\|POST\\|DELETE\\|PUT\\|HEAD\\|OPTIONS\\|PATCH\\) \\(.*\\)$")
+
+(defconst restclient-method-delete-url-regexp
+  "^\\(DELETE\\) \\(.*\\)$")
+
+(defconst restclient-method-get-url-regexp
+  "^\\(GET\\) \\(.*\\)$")
+
+(defconst restclient-method-head-url-regexp
+  "^\\(HEAD\\) \\(.*\\)$")
+
+(defconst restclient-method-options-url-regexp
+  "^\\(OPTIONS\\) \\(.*\\)$")
+
+(defconst restclient-method-patch-url-regexp
+  "^\\(PATCH\\) \\(.*\\)$")
+
+(defconst restclient-method-post-url-regexp
+  "^\\(POST\\) \\(.*\\)$")
+
+(defconst restclient-method-put-url-regexp
+  "^\\(PUT\\) \\(.*\\)$")
 
 (defconst restclient-header-regexp
   "^\\([^](),/:;@[\\{}= \t]+\\): \\(.*\\)$")
@@ -500,7 +567,7 @@ The buffer contains the raw HTTP response sent by the server."
 (defun restclient-single-request-function ()
   (dolist (f restclient-curr-request-functions)
     (ignore-errors
-      (funcall f)))  
+      (funcall f)))
   (setq restclient-curr-request-functions nil)
   (remove-hook 'restclient-response-loaded-hook 'restclient-single-request-function))
 
@@ -625,7 +692,7 @@ Optional argument STAY-IN-WINDOW do not move focus to response buffer if t."
   (backward-char 1)
   (setq deactivate-mark nil))
 
-(defun restclient-show-info ()  
+(defun restclient-show-info ()
   ;; restclient-info-buffer-name
   (interactive)
   (let ((vars-at-point (restclient-find-vars-before-point)))
@@ -643,13 +710,13 @@ Optional argument STAY-IN-WINDOW do not move focus to response buffer if t."
 			   (insert (format "* %s \n|--|\n|Name|Value|\n|---|\n" table-name)))
 		(var-table-footer ()
 				  (insert "|--|\n\n")))
-      
+
       (with-current-buffer (get-buffer-create restclient-info-buffer-name)
 	;; insert our info
 	(erase-buffer)
 
 	(insert "\Restclient Info\ \n\n")
-       
+
 	(var-table "Dynamic Variables")
 	(dolist (dv restclient-var-overrides)
 	  (var-row (car dv) (cdr dv)))
@@ -694,7 +761,7 @@ Optional argument STAY-IN-WINDOW do not move focus to response buffer if t."
         (end-of-line)
         ;; If the overlays at this point have 'invisible set, toggling
         ;; must make the region visible. Else it must hide the region
-        
+
         ;; This part of code is from org-hide-block-toggle method of
         ;; Org mode
         (let ((overlays (overlays-at (point))))
@@ -711,7 +778,14 @@ Optional argument STAY-IN-WINDOW do not move focus to response buffer if t."
     (indent-for-tab-command)))
 
 (defconst restclient-mode-keywords
-  (list (list restclient-method-url-regexp '(1 'restclient-method-face) '(2 'restclient-url-face))
+  (list (list restclient-method-delete-url-regexp '(1 'restclient-method-delete-face) '(2 'restclient-url-face))
+        (list restclient-method-get-url-regexp '(1 'restclient-method-get-face) '(2 'restclient-url-face))
+        (list restclient-method-head-url-regexp '(1 'restclient-method-head-face) '(2 'restclient-url-face))
+        (list restclient-method-options-url-regexp '(1 'restclient-method-options-face) '(2 'restclient-url-face))
+        (list restclient-method-patch-url-regexp '(1 'restclient-method-patch-face) '(2 'restclient-url-face))
+        (list restclient-method-post-url-regexp '(1 'restclient-method-post-face) '(2 'restclient-url-face))
+        (list restclient-method-put-url-regexp '(1 'restclient-method-put-face) '(2 'restclient-url-face))
+        (list restclient-method-url-regexp '(1 'restclient-method-face) '(2 'restclient-url-face))
         (list restclient-svar-regexp '(1 'restclient-variable-name-face) '(2 'restclient-variable-string-face))
         (list restclient-evar-regexp '(1 'restclient-variable-name-face) '(2 'restclient-variable-elisp-face t))
         (list restclient-mvar-regexp '(1 'restclient-variable-name-face) '(2 'restclient-variable-multiline-face t))
