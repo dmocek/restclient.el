@@ -319,6 +319,7 @@
     (setq restclient-request-time-start (current-time))
     (run-hooks 'restclient-http-do-hook)
     (url-retrieve url 'restclient-http-handle-response
+                  (set-face-background 'default "#CCCCCC" (window-frame (frame-selected-window))
                   (append (list method url (if restclient-same-buffer-response
                                                restclient-same-buffer-response-name
                                              (format "*HTTP %s %s*" method url))) handle-args) nil restclient-inhibit-cookies)))
@@ -612,10 +613,10 @@ The buffer contains the raw HTTP response sent by the server."
                               (list "-H" (format "%s: %s" (car header) (cdr header))))
                             headers))))
         (kill-new (concat "curl "
-                          (mapconcat 'shell-quote-argument
+                          (string-join
                                      (append '("-i")
                                              header-args
-                                             (list (concat "-X" method))
+                                             (list (concat "-X " method))
                                              (list url)
                                              (when (> (string-width entity) 0)
                                                (list "-d" entity)))
@@ -635,6 +636,17 @@ The buffer contains the raw HTTP response sent by the server."
   buffer is formatted. Equivalent to a restclient-response-loaded-hook 
   that only runs for this request.
   eg. -> on-response (message \"my hook called\")" )
+
+;;;###autoload
+(defun restclient-find-file ()
+  "Open a restclient file."
+  (interactive)
+  (find-file "/home/dmocek/.restclient/" ".*\.http"))
+
+(defun restclient-find-file2 ()
+  "Open a restclient file."
+  (interactive)
+  (directory-files-recursively ("/home/dmocek/.restclient/" ".*\.http"))
 
 ;;;###autoload
 (defun restclient-http-send-current (&optional raw stay-in-window)
@@ -812,7 +824,8 @@ Optional argument STAY-IN-WINDOW do not move focus to response buffer if t."
     (define-key map (kbd "C-c C-.") 'restclient-mark-current)
     (define-key map (kbd "C-c C-u") 'restclient-copy-curl-command)
     (define-key map (kbd "C-c n n") 'restclient-narrow-to-current)
-    (define-key map (kbd "C-c C-i") 'restclient-show-info)   
+    (define-key map (kbd "C-c C-i") 'restclient-show-info)
+    (define-key map (kbd "C-c C-o") 'restclient-find-file)
     map)
   "Keymap for restclient-mode.")
 
