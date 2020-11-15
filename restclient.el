@@ -6,6 +6,7 @@
 ;; Maintainer: Pavel Kurnosov <pashky@gmail.com>
 ;; Created: 01 Apr 2012
 ;; Keywords: http
+;; Package-Version: 20200502.831
 
 ;; This file is not part of GNU Emacs.
 ;; This file is public domain software. Do what you want.
@@ -21,6 +22,19 @@
 (require 'url)
 (require 'json)
 (require 'outline)
+
+(load "~/.config/restclient/restclient.properties")
+
+;; (with-current-buffer
+    ;; (insert-file-contents "~/.config/restclient/restclient.properties");;response-background-color=green4
+  ;; (keep-lines "contexts" point-min point-max)
+;; );;response-background-color=green4
+
+;; (with-temp-buffer
+;;   (insert-file-contents "~/.config/restclient/restclient.properties")
+;;   (keep-lines "contexts" (point-min) (point-max))
+;;   (setq ctx (when (string-match "contexts: \\(.*\\)" (buffer-string))
+;;               (match-string 1 (buffer-string)))))
 
 (defgroup restclient nil
   "An interactive HTTP client for Emacs."
@@ -107,42 +121,49 @@
                  :foreground "red")))
   "Face for HTTP method."
   :group 'restclient-faces)
+(set-face-attribute 'restclient-method-delete-face nil :foreground restclient-method-delete-face-color)
 
 (defface restclient-method-get-face
   '((t (:inherit font-lock-keyword-face
         :foreground "green")))
   "Face for HTTP method."
   :group 'restclient-faces)
+(set-face-attribute 'restclient-method-get-face nil :foreground restclient-method-get-face-color)
 
 (defface restclient-method-head-face
   '((t (:inherit font-lock-keyword-face
-                 :foreground "grey")))
+        :foreground "grey")))
   "Face for HTTP method."
   :group 'restclient-faces)
+(set-face-attribute 'restclient-method-head-face nil :foreground restclient-method-head-face-color)
 
 (defface restclient-method-options-face
   '((t (:inherit font-lock-keyword-face
-                 :foreground "grey")))
+        :foreground "grey")))
   "Face for HTTP method."
   :group 'restclient-faces)
+(set-face-attribute 'restclient-method-options-face nil :foreground restclient-method-options-face-color)
 
 (defface restclient-method-patch-face
   '((t (:inherit font-lock-keyword-face
-                 :foreground "grey")))
+        :foreground "grey")))
   "Face for HTTP method."
   :group 'restclient-faces)
+(set-face-attribute 'restclient-method-options-face nil :foreground restclient-method-options-face-color)
 
 (defface restclient-method-post-face
   '((t (:inherit font-lock-keyword-face
-                 :foreground "yellow")))
+        :foreground "yellow")))
   "Face for HTTP method."
   :group 'restclient-faces)
+(set-face-attribute 'restclient-method-post-face nil :foreground restclient-method-post-face-color)
 
 (defface restclient-method-put-face
   '((t (:inherit font-lock-keyword-face
-                 :foreground "dodger blue")))
+        :foreground "dodger blue")))
   "Face for HTTP method."
   :group 'restclient-faces)
+(set-face-attribute 'restclient-method-put-face nil :foreground restclient-method-put-face-color)
 
 (defface restclient-url-face
   '((t (:inherit font-lock-function-name-face)))
@@ -316,12 +337,13 @@
 
     (setq restclient-within-call t)
     (setq restclient-request-time-start (current-time))
+    ;; (set-face-background 'default "LightGoldenRod3" (window-frame (get-buffer-window "HTTP Response" t)))
     (run-hooks 'restclient-http-do-hook)
     (url-retrieve url 'restclient-http-handle-response
-                  (set-face-background 'default "#CCCCCC" (window-frame (frame-selected-window))
                   (append (list method url (if restclient-same-buffer-response
                                                restclient-same-buffer-response-name
-                                             (format "*HTTP %s %s*" method url))) handle-args) nil restclient-inhibit-cookies)))
+                                             (format "*HTTP %s %s*" method url))) handle-args) nil restclient-inhibit-cookies))
+  )
 
 (defun restclient-prettify-response (method url)
   (save-excursion
@@ -407,6 +429,7 @@ The buffer contains the raw HTTP response sent by the server."
                             (current-buffer)
                             bufname
                             restclient-same-buffer-response)
+        ;; (set-face-background 'default "PaleGreen3" (window-frame (get-buffer-window "HTTP Response" t)))
         (run-hooks 'restclient-response-received-hook)
         (unless raw
           (restclient-prettify-response method url))
@@ -567,7 +590,7 @@ The buffer contains the raw HTTP response sent by the server."
 (defun restclient-single-request-function ()
   (dolist (f restclient-curr-request-functions)
     (ignore-errors
-      (funcall f)))  
+      (funcall f)))
   (setq restclient-curr-request-functions nil)
   (remove-hook 'restclient-response-loaded-hook 'restclient-single-request-function))
 
@@ -645,7 +668,7 @@ The buffer contains the raw HTTP response sent by the server."
 (defun restclient-find-file2 ()
   "Open a restclient file."
   (interactive)
-  (directory-files-recursively ("/home/dmocek/.restclient/" ".*\.http"))
+  (directory-files-recursively ("/home/dmocek/.restclient/" ".*\.http")))
 
 ;;;###autoload
 (defun restclient-http-send-current (&optional raw stay-in-window)
@@ -703,7 +726,7 @@ Optional argument STAY-IN-WINDOW do not move focus to response buffer if t."
   (backward-char 1)
   (setq deactivate-mark nil))
 
-(defun restclient-show-info ()  
+(defun restclient-show-info ()
   ;; restclient-info-buffer-name
   (interactive)
   (let ((vars-at-point (restclient-find-vars-before-point)))
@@ -721,13 +744,13 @@ Optional argument STAY-IN-WINDOW do not move focus to response buffer if t."
 			   (insert (format "* %s \n|--|\n|Name|Value|\n|---|\n" table-name)))
 		(var-table-footer ()
 				  (insert "|--|\n\n")))
-      
+
       (with-current-buffer (get-buffer-create restclient-info-buffer-name)
 	;; insert our info
 	(erase-buffer)
 
 	(insert "\Restclient Info\ \n\n")
-       
+
 	(var-table "Dynamic Variables")
 	(dolist (dv restclient-var-overrides)
 	  (var-row (car dv) (cdr dv)))
@@ -772,7 +795,7 @@ Optional argument STAY-IN-WINDOW do not move focus to response buffer if t."
         (end-of-line)
         ;; If the overlays at this point have 'invisible set, toggling
         ;; must make the region visible. Else it must hide the region
-        
+
         ;; This part of code is from org-hide-block-toggle method of
         ;; Org mode
         (let ((overlays (overlays-at (point))))
