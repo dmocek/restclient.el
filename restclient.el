@@ -438,23 +438,26 @@ The buffer contains the raw HTTP response sent by the server."
         (buffer-enable-undo)
 	(restclient-response-mode)
         (run-hooks 'restclient-response-loaded-hook)
+        ;; TODO: DJM: I think this is required because of an asynchronous timing issue.
         (sit-for 0 5) ;; This prevents the HTTP file from flashing before the response file.
         (if stay-in-window
             (progn
               (display-buffer (current-buffer) t)
               ;; TODO: DJM: Get the background color of the *HTTP Response* window instead of hard-coding it into #002b36.
           (let ((restclient-same-buffer-response-background-color '"#002b36"))
-            (with-selected-window (get-buffer-window restclient-same-buffer-response-name t)
+            (with-selected-window (get-buffer-window restclient-same-buffer-response-name)
+              ;; TODO: DJM: I think these next two lines are required because of an asynchronous timing issue.  Without it, the .http flashes and not the HTTP response window.  Might have something to do with print cause a print to the screen.
+              (sit-for 0 100)
               (print (get-buffer-window restclient-same-buffer-response-name))
               (set-face-background 'default restclient-response-flash-color (window-frame (selected-window)))
-              (sit-for 0 250)
+              (sit-for 0 100)
               (set-face-background 'default restclient-same-buffer-response-background-color (window-frame (selected-window))))))
           (progn
             (switch-to-buffer-other-window (current-buffer))
             ;; TODO: DJM: Get the background color of the *HTTP Response* window instead of hard-coding it into #002b36.
             (let ((restclient-same-buffer-response-background-color '"#002b36"))
               (set-face-background 'default restclient-response-flash-color (window-frame (selected-window)))
-              (sit-for 0 250)
+              (sit-for 0 100)
               (set-face-background 'default restclient-same-buffer-response-background-color (window-frame (selected-window))))
             ))))))
 
