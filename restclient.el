@@ -21,8 +21,10 @@
 ;;
 (require 'url)
 (require 'json)
+(require 'json-snatcher)
 (require 'outline)
 
+;; Check if this property file exists.  If it doesn't create it and the subdirectories and add a default.
 (load "~/.config/restclient/restclient.properties")
 
 ;; (with-current-buffer
@@ -267,7 +269,8 @@
   "^\\(:[^: \n]+\\)$")
 
 (defconst restclient-var-regexp
-  (concat "^\\(:[^:= ]+\\)[ \t]*\\(:?\\)=[ \t]*\\(<<[ \t]*\n\\(\\(.*\n\\)*?\\)" restclient-comment-separator "\\|\\([^<].*\\)$\\)"))
+  ;; (concat "^\\(:[^:= ]+\\)[ \t]*\\(:?\\)=[ \t]*\\(<<[ \t]*\n\\(\\(.*\n\\)*?\\)" restclient-comment-separator "\\|\\([^<].*\\)$\\)"))
+  (concat "^\\(:[^{{= ]+\\)[ \t]*\\(:?\\)=[ \t]*\\(<<[ \t]*\n\\(\\(.*\n\\)*?\\)" restclient-comment-separator "\\|\\([^<].*\\)$\\)"))
 
 (defconst restclient-svar-regexp
   "^\\(:[^:= ]+\\)[ \t]*=[ \t]*\\(.+?\\)$")
@@ -337,7 +340,6 @@
 
     (setq restclient-within-call t)
     (setq restclient-request-time-start (current-time))
-    ;; (set-face-background 'default "LightGoldenRod3" (window-frame (get-buffer-window "HTTP Response" t)))
     (run-hooks 'restclient-http-do-hook)
     (url-retrieve url 'restclient-http-handle-response
                   (append (list method url (if restclient-same-buffer-response
@@ -429,16 +431,32 @@ The buffer contains the raw HTTP response sent by the server."
                             (current-buffer)
                             bufname
                             restclient-same-buffer-response)
-        ;; (set-face-background 'default "PaleGreen3" (window-frame (get-buffer-window "HTTP Response" t)))
+
         (run-hooks 'restclient-response-received-hook)
         (unless raw
           (restclient-prettify-response method url))
         (buffer-enable-undo)
 	(restclient-response-mode)
         (run-hooks 'restclient-response-loaded-hook)
+        (sit-for 0 5) ;; This prevents the HTTP file from flashing before the response file.
         (if stay-in-window
-            (display-buffer (current-buffer) t)
-          (switch-to-buffer-other-window (current-buffer)))))))
+            (progn
+              (display-buffer (current-buffer) t)
+              ;; TODO: DJM: Get the background color of the *HTTP Response* window instead of hard-coding it into #002b36.
+          (let ((restclient-same-buffer-response-background-color '"#002b36"))
+            (with-selected-window (get-buffer-window restclient-same-buffer-response-name t)
+              (print (get-buffer-window restclient-same-buffer-response-name))
+              (set-face-background 'default restclient-response-flash-color (window-frame (selected-window)))
+              (sit-for 0 250)
+              (set-face-background 'default restclient-same-buffer-response-background-color (window-frame (selected-window))))))
+          (progn
+            (switch-to-buffer-other-window (current-buffer))
+            ;; TODO: DJM: Get the background color of the *HTTP Response* window instead of hard-coding it into #002b36.
+            (let ((restclient-same-buffer-response-background-color '"#002b36"))
+              (set-face-background 'default restclient-response-flash-color (window-frame (selected-window)))
+              (sit-for 0 250)
+              (set-face-background 'default restclient-same-buffer-response-background-color (window-frame (selected-window))))
+            ))))))
 
 (defun restclient-decode-response (raw-http-response-buffer target-buffer-name same-name)
   "Decode the HTTP response using the charset (encoding) specified in the Content-Type header. If no charset is specified, default to UTF-8."
@@ -665,10 +683,10 @@ The buffer contains the raw HTTP response sent by the server."
   (interactive)
   (find-file "/home/dmocek/.restclient/" ".*\.http"))
 
-(defun restclient-find-file2 ()
-  "Open a restclient file."
-  (interactive)
-  (directory-files-recursively ("/home/dmocek/.restclient/" ".*\.http")))
+;; (defun restclient-find-file2 ()
+;;   "Open a restclient file."
+;;   (interactive)
+;;   (directory-files-recursively ("/home/dmocek/.restclient/" ".*\.http")))
 
 ;;;###autoload
 (defun restclient-http-send-current (&optional raw stay-in-window)
